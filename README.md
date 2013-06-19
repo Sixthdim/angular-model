@@ -30,6 +30,8 @@ App.config(['ModelProvider', function(ModelProvider){ /* Configuration */ }]);
  *          action: (string) AngularJS fetch action (optional) (query [default], get, put, delete, jsonp, etc.)
  *          type: (string) Base return type (array, object)
  *          data: (mixed) A data array or object that will auto-set to the model
+ *          cache: (bool) Cache data based on URI.
+ *          resolve: (string) When to resolve. If 'parent', promise will be resolved on parent data load. Otherwise, resolved when all data is loaded, including nested.
  *          nested: (object) Auto load nested API endpoint data into result set
  *              path: (string) Object notation path to the endpoint URL. Supports nested arrays. eg: results[].path.to
  *              action: (string) AngularJS fetch action (optional) Defaults to parent (query, get, put, delete, jsonp, etc.)
