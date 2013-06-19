@@ -1,0 +1,27 @@
+<div class="container">
+
+  <h4>Colors Demo</h4>
+
+  <p ng-show="!Model.Colors.length"><button class="btn" ng-click="load()">Load Colors</button></p>
+
+  <p ng-show="Model.Colors.length"><button class="btn" ng-click="append()">Append More</button> <button class="btn" ng-click="clear()">Clear Data</button></p>
+
+  <p class="alert alert-info" ng-show="loading">Loading Data...</p>
+  <p class="alert alert-error" ng-show="error">There was an error loading the data. :(</p>
+
+  <div ng-show="Model.Colors.length">
+    <h5>Formatted Data</h5>
+    <ul>
+      <li ng-repeat="color in Model.Colors | filter:filterText">
+        <div style="color:{{ color.hex }};">{{ color.color | uppercase }}</div>
+        <ul>
+          <li ng-show="color.things.length" ng-repeat="thing in color.things">{{ thing.name }}</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h5>JSON Data</h5>
+    <pre>{{ Model.Colors | json }}</pre>
+  </div>
+
+</div>

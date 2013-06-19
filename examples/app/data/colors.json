@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "color": "red",
+        "hex": "#f00",
+        "things": {
+            "href": "data/red-things.json"
+        }
+    },
+    {
+        "id": 2,
+        "color": "green",
+        "hex": "#0f0",
+        "things": {
+            "href": "data/green-things.json"
+        }
+    },
+    {
+        "id": 3,
+        "color": "blue",
+        "hex": "#00f",
+        "things": {
+            "href": "data/blue-things.json"
+        }
+    }
+]

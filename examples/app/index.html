@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!--[if lte IE 8]><![endif]-->
+<html lang="en" class="ng-app: app" ng-app="app" ng-controller="AppCtrl">
+<head>
+  <title>angular-model - {{ Model.Page.title }}</title>
+  <meta charset="utf-8">
+  <meta name="fragment" content="!">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style type="text/css">
+    [ng-cloak] {
+      display: none;
+    }
+  </style>
+
+  <!-- Twitter Bootstrap CSS -->
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.min.css" rel="stylesheet">
+</head>
+<body class="{{ Model.Page.bodyClass }}">
+
+  <div ng-cloak>
+    <div class="navbar">
+      <div class="navbar-inner">
+        <a class="brand" href="/">angular-model by: Chris Collins</a>
+        <ul class="nav">
+          <li ng-class="{active:(Model.Page.bodyClass == 'colors')}"><a href="/">Colors Demo</a></li>
+          <li><a href="https://github.com/Sixthdim/angular-model" target="_blank">Github Project</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="content">
+      <div ng-view></div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <!-- AngularJS 1.1.4 -->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.1.4/angular.min.js"></script>
+  <!-- Angular ngResource -->
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.1.4/angular-resource.min.js"></script>
+  <!-- jQuery -->
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <!-- Underscore -->
+  <script type="text/javascript" src="http://underscorejs.org/underscore-min.js"></script>
+  <!-- Angular UI Bootstrap -->
+  <script type="text/javascript" src="/assets/js/ui.bootstrap-0.3.0.js"></script>
+
+  <!-- App -->
+  <script type="text/javascript" src="app.js"></script>
+  <!-- Angular Model -->
+  <script type="text/javascript" src="/common/angular-model.js"></script>
+  <!-- App Commons -->
+  <script type="text/javascript" src="/common/LocationConfig.js"></script>
+  <script type="text/javascript" src="/common/RoutesConfig.js"></script>
+  <script type="text/javascript" src="/common/AppController.js"></script>
+  <!-- App: Colors Example -->
+  <script type="text/javascript" src="/colors/ColorsController.js"></script>
+  <script type="text/javascript" src="/colors/ColorsModel.js"></script>
+
+</body>
+</html>
