@@ -7,7 +7,13 @@ angular-model is an AngularJS service that is intended to be an easy-to-use, sem
 
 ### Getting Started
 
-* **Install**
+* **Include**
+
+``` HTML
+<script type="text/javascript" src="angular-model.min.js"></script>
+```
+
+* **Use in App**
 
 ```javascript
 var App = angular.module('app', ['model']);
