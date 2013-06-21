@@ -3,6 +3,13 @@
         "id": 1,
         "color": "red",
         "hex": "#f00",
+        "some": {
+            "deep": {
+                "nested": {
+                    "message": "Annoying deep nested red message"
+                }
+            }
+        },
         "things": {
             "href": "data/red-things.json"
         }
@@ -11,6 +18,13 @@
         "id": 2,
         "color": "green",
         "hex": "#0f0",
+        "some": {
+            "deep": {
+                "nested": {
+                    "message": "Annoying deep nested green message"
+                }
+            }
+        },
         "things": {
             "href": "data/green-things.json"
         }
@@ -19,6 +33,13 @@
         "id": 3,
         "color": "blue",
         "hex": "#00f",
+        "some": {
+            "deep": {
+                "nested": {
+                    "message": "Annoying deep nested blue message"
+                }
+            }
+        },
         "things": {
             "href": "data/blue-things.json"
         }

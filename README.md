@@ -38,11 +38,17 @@ App.config(['ModelProvider', function(ModelProvider){ /* Configuration */ }]);
  *          data: (mixed) A data array or object that will auto-set to the model
  *          cache: (bool) Cache data based on URI.
  *          resolve: (string) When to resolve. If 'parent', promise will be resolved on parent data load. Otherwise, resolved when all data is loaded, including nested.
+ *          aliases: (array) Alias deep data nestings to a simpler model path. Array of objects:
+ *              src: (string) Source object-notation path
+ *              dest: (string) Desination object-notation path
  *          nested: (object) Auto load nested API endpoint data into result set
- *              path: (string) Object notation path to the endpoint URL. Supports nested arrays. eg: results[].path.to
+ *              path: (string) Object-notation path to the endpoint URL. Supports nested arrays. eg: results[].path.to
  *              action: (string) AngularJS fetch action (optional) Defaults to parent (query, get, put, delete, jsonp, etc.)
  *              type: (string) Base return type (array, object)
- *              inject: (string) Object notation relative path of where to inject data
+ *              inject: (string) Object-notation relative path of where to inject data
+ *              aliases: (array) Alias deep data nestings to a simpler model path. Array of objects:
+ *                  src: (string) Source object-notation path
+ *                  dest: (string) Desination object-notation path
  */
 ModelProvider.configureModels({
     Page: {},
@@ -50,6 +56,12 @@ ModelProvider.configureModels({
     MyContext: {
         endpoint: 'path/to/data.json',
         type: 'array',
+        aliases: [
+            {
+                src: 'some.deep.nested.data',
+                dest: 'my_data'
+            }
+        ],
         nested: {
             path: 'extra.href',
             type: 'array',
@@ -111,7 +123,7 @@ Model.set('MyContext', {
 
 ```javascript
 /* Model.value(key);
- * key: (string) Object notation path, starting with the model name.
+ * key: (string) Object-notation path, starting with the model name.
  * @return: Mixed
  */
 var myVal = Model.value('MyContext[3].some_data');

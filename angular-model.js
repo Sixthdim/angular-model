@@ -29,7 +29,7 @@
  *
  *    // Get model value
  *    Model.value(key)
- *      key: object notation of key within the Model
+ *      key: object-notation of key within the Model
  *    @return value
  *
  *    // Clear Model data
@@ -62,12 +62,24 @@
  *        type: 'object',                               // Or array, what's to be expected from API
  *        cache: true,                                  // Cache data based on URI
  *        resolve: 'parent',                            // When to resolve. If 'parent', pormise will be resolved on parent data load. Otherwise, resolved when all data is loaded, including nested.
+ *        aliases: [                                    // Alias deep data nestings to a simpler model path
+ *          {
+ *            src: 'some.really.nested.stuff',          // Source object-notation path
+ *            dest: 'stuff'                             // Desination object-notation path: Model.ModelName.some.really.nested.stuff -> Model.ModelName.stuff
+ *          }
+ *        ],
  *        nested: [                                     // Array of objects representing nested endpoints
  *          {
- *            path: 'object.notation[].to.url',         // Path in object notation to URL. Support for nested arrays []
+ *            path: 'object.notation[].to.url',         // Path in object-notation to URL. Support for nested arrays []
  *            action: 'jsonp',                          // Endpoint API query action. Supported: query, get, jsonp
  *            type: 'array',                            // Or object, what's to be expected from API
- *            inject: 'relative.path'                   // Segment-relative object notation of where to inject data.
+ *            inject: 'relative.path',                  // Segment-relative object-notation of where to inject data.
+ *            aliases: [                                // Alias deep data nestings to a simpler model path
+ *              {
+ *                src: 'relative.path[0].some.really.nested.stuff', // Source object-notation path
+ *                dest: 'nested_stuff'                  // Desination object-notation path.
+ *              }
+ *            ]
  *          }
  *        ],
  *        data: {}                                      // A data array or object that will auto-set to the model
@@ -230,6 +242,15 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               $rootScope.Model[model][index] = $rootScope.Model[model][index].concat(data);
             } else {
               $rootScope.Model[model] = $rootScope.Model[model].concat(data);
+            }
+          }
+
+          // Do aliasing
+          if (angular.isDefined(ns.config[model].aliases)){
+            if (angular.isDefined(index)){
+              pri.doAliasing(model, ns.config[model].type, ns.config[model].aliases, '['+index+']');
+            } else {
+              pri.doAliasing(model, ns.config[model].type, ns.config[model].aliases);
             }
           }
 
@@ -451,7 +472,8 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                   path: '',
                   isArray: false,
                   type: nesting.type,
-                  action: nesting.action
+                  action: nesting.action,
+                  aliases: (angular.isDefined(nesting.aliases) ? nesting.aliases : [])
                 };
 
             // Store config array on the primary config's nested element
@@ -544,7 +566,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
           } else {
             // Build current nest path
-            var path = nestPath+(nestPath==''?'':'.')+nestConfig[configIndex].path;
+            var path = (nestPath==''?'':nestPath+'.')+nestConfig[configIndex].path;
 
             // Segment is not an array, fetch endpoint
             endpoint = pri.getObjValue($rootScope.Model[model], path);
@@ -565,6 +587,11 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               var nestedResults = resource[nestingAction](function(){
                 // HTTP Success
                 pri.setObjValue($rootScope.Model[model], nestPath+'.'+nestingInject, nestedResults);
+
+                // Do aliasing
+                pri.doAliasing(model, 'object', nestConfig[configIndex].aliases, nestPath);
+
+                // Resolve promise
                 defer.resolve();
 
               }, function(){
@@ -578,6 +605,31 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           }
 
           return promises;
+        },
+
+
+        // Do aliasing
+        doAliasing: function(model, type, aliases, basePath){
+          // model has aliases?
+          if (angular.isDefined(aliases) && angular.isArray(aliases)){
+            for (var i = 0; i < aliases.length; i++){
+              // src and dest are defined?
+              if (angular.isDefined(aliases[i].src) && angular.isDefined(aliases[i].dest)){
+                // get source value
+                var srcPath = (angular.isDefined(basePath) ? basePath+'.' : '') + aliases[i].src,
+                    destPath = (angular.isDefined(basePath) ? basePath+'.' : '') + aliases[i].dest;
+
+                if (type == 'array'){
+                  for (var x = 0; x < $rootScope.Model[model].length; x++){
+                    pri.setObjValue($rootScope.Model[model][x], destPath, pri.getObjValue($rootScope.Model[model][x], srcPath));
+                  }
+
+                } else {
+                  pri.setObjValue($rootScope.Model[model], destPath, pri.getObjValue($rootScope.Model[model], srcPath));
+                }
+              }
+            }
+          }
         },
 
 

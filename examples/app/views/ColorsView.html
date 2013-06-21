@@ -14,6 +14,7 @@
     <ul>
       <li ng-repeat="color in Model.Colors | filter:filterText">
         <div style="color:{{ color.hex }};">{{ color.color | uppercase }}</div>
+        <div>{{ color.message }}</div>
         <ul>
           <li ng-show="color.things.length" ng-repeat="thing in color.things">{{ thing.name }}</li>
         </ul>
