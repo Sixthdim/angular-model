@@ -1,96 +1,16 @@
 /**
  * @description Model - An API helper and data store
- * @version 0.1.0
- * @dependencies Underscore, jQuery
+ * @version 0.2.0
+ * @dependencies jQuery
  * @author Chris Collins
  * @website https://github.com/Sixthdim/angular-model
- *
- * @todo Add save() to save model data back to API
- * @todo Add remove() to delete record from Model & API
- * @todo Don't reload populated nested endpoints on append
- * @todo Make append() work on nested arrays
- * @todo Support computed model properties. eg. myProp() -> myProp
- * @todo Include _.keys() and $.extend() equivalents so there are no dependencies
- *
- * @usage
- *    // Update Model with data from an endpoint
- *    Model.update(model [, params, target])
- *      model: name of the model within the model definition
- *      params: object of params that replace url vars (:id, :page, .etc)
- *      target: How to update the model. Valid: update, replace, append (array only)
- *    @return promise(result)
- *
- *    // Set Model with arbatrary data
- *    Model.set(name, data, target)
- *      name: model name
- *      data: data
- *      target: How to update the model. Valid: update, replace, append
- *    @return promise(result)
- *
- *    // Get model value
- *    Model.value(key)
- *      key: object-notation of key within the Model
- *    @return value
- *
- *    // Clear Model data
- *    Model.clear(model)
- *      model: name of the model within the model definition
- *
- *    // Start Interval model update
- *    Model.startIntervalUpdate(model, seconds [, params, target])
- *      model: Name of the model within the model definition
- *      seconds: Interval seconds
- *      params: Object of params that replace url vars (:id, :page, .etc)
- *      target: How to update the model. Valid: update, replace, append (array only)
- *
- *    // Stop Interval model update
- *    Model.stopIntervalUpdate(model)
- *      model: Name of the model within the model definition
- *
- * View binding example:
- *    Model.Endpoint.key
- *
- *
- * Model Config
- *
- * Options:
- *    // Configure Models and Endpoints. All attributes are optional
- *    Model.configureModels({
- *      ModelName: {                                    // Model name, camel-case starting with upper case (optional convention, but makes it easy to determine what is a model)
- *        endpoint: 'http://url.to/api/endpoint/:id',   // Endpoint URL. Supports variable notation :var
- *        action: 'jsonp',                              // Endpoint API query action. Supported: query, get, jsonp
- *        type: 'object',                               // Or array, what's to be expected from API
- *        cache: true,                                  // Cache data based on URI
- *        resolve: 'parent',                            // When to resolve. If 'parent', pormise will be resolved on parent data load. Otherwise, resolved when all data is loaded, including nested.
- *        aliases: [                                    // Alias deep data nestings to a simpler model path
- *          {
- *            src: 'some.really.nested.stuff',          // Source object-notation path
- *            dest: 'stuff'                             // Desination object-notation path: Model.ModelName.some.really.nested.stuff -> Model.ModelName.stuff
- *          }
- *        ],
- *        nested: [                                     // Array of objects representing nested endpoints
- *          {
- *            path: 'object.notation[].to.url',         // Path in object-notation to URL. Support for nested arrays []
- *            action: 'jsonp',                          // Endpoint API query action. Supported: query, get, jsonp
- *            type: 'array',                            // Or object, what's to be expected from API
- *            inject: 'relative.path',                  // Segment-relative object-notation of where to inject data.
- *            aliases: [                                // Alias deep data nestings to a simpler model path
- *              {
- *                src: 'relative.path[0].some.really.nested.stuff', // Source object-notation path
- *                dest: 'nested_stuff'                  // Desination object-notation path.
- *              }
- *            ]
- *          }
- *        ],
- *        data: {}                                      // A data array or object that will auto-set to the model
- *      }
- *    })
  */
 angular.module('model', ['ngResource']).provider('Model', function(){
 
   // Define private namespace
   var ns = {
     config: {},
+    model: {},
     cache: {},
     actions: {
       'jsonp': {
@@ -141,16 +61,13 @@ angular.module('model', ['ngResource']).provider('Model', function(){
   // Provider $get method
   this.$get = [
     // DI
-    '$rootScope', '$resource', '$q', '$timeout', '$location',
-    function($rootScope, $resource, $q, $timeout, $location){
-
-      // Bind Model Data Store to $rootScope
-      $rootScope.Model = {};
+    '$resource', '$q', '$timeout', '$location',
+    function($resource, $q, $timeout, $location){
 
       // Auto-set models with config data
       angular.forEach(ns.config, function(val, key){
         if (angular.isDefined(val.data)){
-          $rootScope.Model[key] = val.data;
+          ns.model[key] = val.data;
         }
       });
 
@@ -165,7 +82,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
       pub = {
 
         // Add a new model or models (post-config)
-        addModel: function(parent, def){
+        addModel: function(parent, def, scope){
           if (angular.isDefined(def.name)){
             // Single model by name
             // Generate model config
@@ -179,9 +96,13 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             // Pre-popuate model data
             pri.prepopulateData(def.name);
 
+            // Scope Model
+            if (angular.isDefined(scope)){
+              pub.scopeModel(parent, def.name, scope);
+            }
           } else {
             // Add multiple models
-            var models = _.keys(def);
+            var models = pri._keys(def);
             for (var m = 0; m < models.length; m++){
               // Extend service config
               ns.config[models[m]] = {};
@@ -189,6 +110,31 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
               // Pre-popuate model data
               pri.prepopulateData(def.name);
+
+              // Scope Model
+              if (angular.isDefined(scope)){
+                pub.scopeModel(parent, def.name, scope);
+              }
+            }
+          }
+        },
+
+
+        // Set model reference to scope (scope's model subscription)
+        scopeModel: function(parent, model, scope){
+          if (angular.isDefined(scope) && angular.isString(model)){
+            if (angular.isUndefined(scope.Model)){
+              scope.Model = {};
+            }
+            if (angular.isUndefined(ns.model[model])){
+              if (angular.isDefined(ns.config[model]) && angular.isDefined(ns.config[model].type) && ns.config[model].type == 'array'){
+                ns.model[model] = [];
+              } else {
+                ns.model[model] = {};
+              }
+            }
+            if (angular.isUndefined(scope.Model[model])){
+              scope.Model[model] = ns.model[model];
             }
           }
         },
@@ -201,37 +147,57 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             target = 'update';
           }
 
-          // Clear/instantiate model
-          if ( (angular.isUndefined($rootScope.Model[model])) || (target == 'replace') ){
+          // Create model
+          if (angular.isUndefined(ns.model[model])){
+            if (angular.isDefined(ns.config[model]) && angular.isDefined(ns.config[model].type) && ns.config[model] == 'array'){
+              ns.model[model] = [];
+
+              if (angular.isDefined(index)){
+                if (angular.isArray(data)){
+                  ns.model[model][index] = [];
+                } else {
+                  ns.model[model][index] = {};
+                }
+              }
+            } else {
+              ns.model[model] = {};
+            }
+
+            target = 'replace';
+          }
+
+          // Clear model
+          if (target == 'replace'){
             if (angular.isArray(data)){
               if (angular.isDefined(index)){
-                $rootScope.Model[model][index] = [];
+                ns.model[model][index].splice(0);
               } else {
-                $rootScope.Model[model] = [];
+                ns.model[model].splice(0);
               }
             } else {
               if (angular.isDefined(index)){
-                $rootScope.Model[model][index] = {};
+                ns.model[model][index] = {};
               } else {
-                $rootScope.Model[model] = {};
+                ns.model[model] = {};
               }
             }
-            target = 'replace';
           }
 
           // Replace array model data, update object model data (deep extend)
           if ( (target == 'replace') || (target == 'update') ){
             if (angular.isArray(data)){
               if (angular.isDefined(index)){
-                $rootScope.Model[model][index] = data;
+                ns.model[model][index].splice(0);
+                Array.prototype.push.apply(ns.model[model][index], data);
               } else {
-                $rootScope.Model[model] = data;
+                ns.model[model].splice(0);
+                Array.prototype.push.apply(ns.model[model], data);
               }
             } else {
               if (angular.isDefined(index)){
-                $.extend(true, $rootScope.Model[model][index], data);
+                $.extend(true, ns.model[model][index], data);
               } else {
-                $.extend(true, $rootScope.Model[model], data);
+                $.extend(true, ns.model[model], data);
               }
             }
           }
@@ -239,9 +205,9 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           // Append to model data
           if (target == 'append'){
             if (angular.isDefined(index)){
-              $rootScope.Model[model][index] = $rootScope.Model[model][index].concat(data);
+              Array.prototype.push.apply(ns.model[model][index], data);
             } else {
-              $rootScope.Model[model] = $rootScope.Model[model].concat(data);
+              Array.prototype.push.apply(ns.model[model], data);
             }
           }
 
@@ -254,7 +220,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             }
           }
 
-          return $rootScope.Model[model];
+          return ns.model[model];
         },
 
 
@@ -312,7 +278,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
             // Resolve on parent complete
             if (angular.isDefined(ns.config[model].resolve) && ns.config[model].resolve == 'parent'){
-              defer.resolve( $rootScope.Model[model] );
+              defer.resolve( ns.model[model] );
             }
 
             // Get nested if any, return promise
@@ -323,13 +289,13 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               }
 
               // Resolve promise
-              defer.resolve( $rootScope.Model[model] );
+              defer.resolve( ns.model[model] );
             });
 
           }, function(error){
             // Error
             // Resolve promise
-            defer.resolve( $rootScope.Model[model] );
+            defer.resolve( ns.model[model] );
           });
 
           return defer.promise;
@@ -352,8 +318,12 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
         // Clear a model's data
         clear: function(parent, model){
-          if (angular.isDefined($rootScope.Model[model])){
-            delete $rootScope.Model[model];
+          if (angular.isDefined(ns.model[model])){
+            if (angular.isArray(ns.model[model])){
+              ns.model[model].splice(0);
+            } else {
+              ns.model[model] = {};
+            }
           }
           pub.clearCache(parent, model);
         },
@@ -363,16 +333,16 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         value: function(parent, key){
           // No key, return model data store
           if (angular.isUndefined(key)){
-            return $rootScope.Model;
+            return ns.model;
           }
 
           // No sub keys, return child
           if (key.indexOf('.') == -1){
-            return $rootScope.Model[key];
+            return ns.model[key];
           }
 
           // Return nested child
-          return pri.getObjValue($rootScope.Model, key);
+          return pri.getObjValue(ns.model, key);
         },
 
 
@@ -420,8 +390,16 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           if (angular.isDefined(model)){
             // Specific model
             if (angular.isDefined(ns.config[model]) && angular.isDefined(ns.config[model].data)){
-              $rootScope.Model[model] = {};
-              angular.extend($rootScope.Model[model], ns.config[model].data);
+              if (angular.isArray(ns.config[model].data)){
+                if (angular.isUndefined(ns.model[model])){
+                  ns.model[model] = [];
+                }
+                Array.prototype.push.apply(ns.model[model], ns.config[model].data);
+
+              } else {
+                ns.model[model] = {};
+                angular.extend(ns.model[model], ns.config[model].data);
+              }
             }
 
           } else {
@@ -433,6 +411,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             });
           }
         },
+
 
         // Do nesting
         doNesting: function(model){
@@ -557,7 +536,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           // If segment is an array, loop through data array and fetch each nested endpoint
           if (nestConfig[configIndex].isArray){
             nestPath = nestPath+(nestPath==''?'':'.')+nestConfig[configIndex].path;
-            nestedData = pri.getObjValue($rootScope.Model[model], nestPath);
+            nestedData = pri.getObjValue(ns.model[model], nestPath);
 
             for (data_i = 0; data_i < nestedData.length; data_i++){
               var path = nestPath+'['+data_i+']';
@@ -569,7 +548,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             var path = (nestPath==''?'':nestPath+'.')+nestConfig[configIndex].path;
 
             // Segment is not an array, fetch endpoint
-            endpoint = pri.getObjValue($rootScope.Model[model], path);
+            endpoint = pri.getObjValue(ns.model[model], path);
 
             // Endpoint is a string
             if (angular.isString(endpoint)){
@@ -586,7 +565,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               resource = $resource(endpoint, nestingParams, nestingActions);
               var nestedResults = resource[nestingAction](function(){
                 // HTTP Success
-                pri.setObjValue($rootScope.Model[model], nestPath+'.'+nestingInject, nestedResults);
+                pri.setObjValue(ns.model[model], nestPath+'.'+nestingInject, nestedResults);
 
                 // Do aliasing
                 pri.doAliasing(model, 'object', nestConfig[configIndex].aliases, nestPath);
@@ -620,12 +599,12 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                     destPath = (angular.isDefined(basePath) ? basePath+'.' : '') + aliases[i].dest;
 
                 if (type == 'array'){
-                  for (var x = 0; x < $rootScope.Model[model].length; x++){
-                    pri.setObjValue($rootScope.Model[model][x], destPath, pri.getObjValue($rootScope.Model[model][x], srcPath));
+                  for (var x = 0; x < ns.model[model].length; x++){
+                    pri.setObjValue(ns.model[model][x], destPath, pri.getObjValue(ns.model[model][x], srcPath));
                   }
 
                 } else {
-                  pri.setObjValue($rootScope.Model[model], destPath, pri.getObjValue($rootScope.Model[model], srcPath));
+                  pri.setObjValue(ns.model[model], destPath, pri.getObjValue(ns.model[model], srcPath));
                 }
               }
             }
@@ -674,7 +653,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         serializeURI: function(){
           var params = $location.search(),
               serial = [],
-              keys = _.keys(params).sort(),
+              keys = pri._keys(params).sort(),
               i = 0;
 
           serial.push('"'+$location.path()+'"');
@@ -769,6 +748,16 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           }
 
           obj[path[last]] = value;
+        },
+
+        // UnderscoreJS equivelent of _.keys()
+        // Retrieve the names of an object's properties.
+        // Delegates to **ECMAScript 5**'s native `Object.keys`
+        _keys: Object.keys || function(obj){
+          if (obj !== Object(obj)) throw new TypeError('Invalid object');
+          var keys = [];
+          for (var key in obj) if (hasOwnProperty.call(obj, key)) keys[keys.length] = key;
+          return keys;
         }
 
       };
@@ -781,6 +770,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
       // Expose public methods. Bind functions and return service
       var service = {};
       service.addModel = angular.bind(service, pub.addModel, null);
+      service.scopeModel = angular.bind(service, pub.scopeModel, null);
       service.set = angular.bind(service, pub.set, null);
       service.update = angular.bind(service, pub.update, null);
       service.value = angular.bind(service, pub.value, null);

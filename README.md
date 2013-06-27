@@ -1,9 +1,9 @@
-angular-model
+angular-model v0.2.0
 =============
 
 <b>A single source of truth for your AngularJS apps.</b>
 
-angular-model is an AngularJS service that is intended to be an easy-to-use, semantic and configurable tool for accessing API endpoints and storing returned data as well as arbitrary data in a root scope data store. Model data is available for use in your views and is updated from controllers with minimal coding. For example, update your model data with `Model.update('MyContext');` and bind in your view with `<div>{{ Model.MyContext.some_data }}</div>`. Simple as that! The data store is updated asynchronously from the server (or static JSON file). This approach may be a little different than what you're use to, as the job of the controller is mainly to make change requests to the models it cares about, then you would use AngularJS directives (or controllers) to watch the Model for specific changes to keep element states up to date. AngularJS binds always stay up to date.
+angular-model is an AngularJS service that is intended to be an easy-to-use, semantic and configurable tool for accessing API endpoints and storing returned data as well as arbitrary data in a centralized data store. Controllers can "subscribe" their scope to a model. For example, subscribe to the model with `Model.scopeModel('MyContext', $scope);`, update your model data with `Model.update('MyContext');` and bind in your view with `<div>{{ Model.MyContext.some_data }}</div>`. Simple as that! The data store is updated asynchronously from the server (or static JSON file). This approach may be a little different than what you're use to, as the job of the controller is mainly to make change requests to the models it cares about, then you would use AngularJS directives (or controllers) to watch the Model for specific changes to keep element states up to date. AngularJS binds always stay up to date.
 
 ### Getting Started
 
@@ -85,6 +85,17 @@ App.controller('ApiDemoCtrl', ['$scope', 'Model', function($scope, Model){ /* Co
 
 ### Controller Methods and Examples
 
+* **Subscribe your controller's scope to a model**
+
+```javascript
+/* Model.scopeModel(model_name, scope);
+ * model_name: (string) The name of the model (context)
+ * scope: (object) AngularJS $scope or $rootScope
+ * @return: AngularJS Promise
+ */
+Model.scopeModel('MyContext', $scope);
+```
+
 * **Update the model from an API endpoint**
 
 ```javascript
@@ -154,7 +165,7 @@ Model.stopIntervalUpdate('MyContext');
 
 ```javascript
 /* Model.clear(model_name);
- *  model_name: (string) The name of the model (context)
+ * model_name: (string) The name of the model (context)
  */
 Model.clear('MyContext');
 ```
@@ -162,15 +173,16 @@ Model.clear('MyContext');
 * **Add new model on the fly**
 
 ```javascript
-/* Model.addModel(model_definition);
- *  model_definition: (object) The model definition. Same as model config, it just has a model name property.
+/* Model.addModel(model_definition[, scope]);
+ * model_definition: (object) The model definition. Same as model config, it just has a model name property.
+ * scope: (object) AngularJS $scope or $rootScope that scubscribes to this model
  */
 Model.addModel({
   name: 'MyNewContext',
   endpoint: 'path/to/data.json',
   type: 'array',
   data: [1, 2, 3]
-});
+}, $scope);
 ```
 
 ### Views/Partials
@@ -206,7 +218,7 @@ Model.addModel({
 * Don't reload populated nested endpoints on append
 * Make append() work on nested arrays
 * Support computed model properties. eg. myProp() -> myProp
-* Include _.keys() and $.extend() equivalents so there are no dependencies
+* Include an $.extend() equivalent so there are no jQuery dependency
 
 ### The End
 

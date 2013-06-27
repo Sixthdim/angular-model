@@ -6,6 +6,9 @@ App.ng.controller('AppCtrl',
     // Dependency Injection
     '$scope', 'Model',
     function($scope, Model){
+      // Scope model
+      Model.scopeModel('Page', $scope);
+
       // Create New Page Model
       Model.addModel({
         name: 'Page',

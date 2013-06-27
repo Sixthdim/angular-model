@@ -16,6 +16,9 @@ App.ng.controller('ColorsCtrl',
       $scope.loading = false;
       $scope.error = false;
 
+      // Scope model
+      Model.scopeModel('Colors', $scope);
+
       // Update the Model with data from the Colors endpoint
       $scope.load = function(){
         $scope.loading = true;
