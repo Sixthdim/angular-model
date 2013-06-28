@@ -570,6 +570,8 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               resource = $resource(endpoint, nestingParams, nestingActions);
               var nestedResults = resource[nestingAction](function(){
                 // HTTP Success
+
+                // Inject nested data into
                 pri.setObjValue(ns.model[model], nestPath+'.'+nestingInject, nestedResults);
 
                 // Do aliasing
@@ -674,15 +676,24 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         // Get an object's value based on it's path
         getObjValue: function(obj, p){
           if (p == ''){
-            return obj;
+            if (angular.isArray(obj)){
+              return obj.slice();
+            }
+            return $.extend(true, {}, obj);
           }
 
-          var val = obj,
+          var val = null,
               path = p.split('.'),
               i = 0,
               node = '',
               index = 0,
               patt = /\[(.*)\]$/;
+
+          if (angular.isArray(obj)){
+            val = obj.slice();
+          } else {
+            val = $.extend(true, {}, obj);
+          }
 
           for (i = 0; i < path.length; i++){
             node = path[i];
@@ -708,21 +719,27 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         },
 
 
-        // Set an object's value (by reference) based on it's path
+        // Set a value to an object based on the path
         setObjValue: function(obj, p, value){
+          // No path, set base obj to value
           if (p == ''){
-            obj = value;
+            if (angular.isArray(obj) && angular.isArray(value)){
+              obj = value.slice();
+            } else if (angular.isObject(obj) && angular.isObject(value)){
+              $.extend(true, obj, value);
+            } else {
+              obj = value;
+            }
             return;
           }
 
           var path = p.split('.'),
-              last = (path.length - 1),
               i = 0,
               node = '',
               index = 0,
               patt = /\[(.*)\]$/;
 
-          for (i = 0; i < last; i++){
+          for (i = 0; i < path.length; i++){
             node = path[i];
 
             if (node.indexOf('[') > -1){
@@ -730,11 +747,22 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               node = node.replace(patt, '');
 
               if (node == ''){
+                if (i == (path.length - 1)){
+                  obj[index] = value;
+                  break;
+                }
+
                 obj = obj[index];
+
               } else {
                 if ((node in obj) === false){
                   obj[node] = [];
                   obj[node][index] = {};
+                }
+
+                if (i == (path.length - 1)){
+                  obj[node][index] = value;
+                  break;
                 }
 
                 obj = obj[node][index];
@@ -746,14 +774,17 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                   obj[node] = {};
                 }
 
+                if (i == (path.length - 1)){
+                  obj[node] = value;
+                  break;
+                }
+
                 obj = obj[node];
               }
             }
-
           }
-
-          obj[path[last]] = value;
         },
+
 
         // UnderscoreJS equivelent of _.keys()
         // Retrieve the names of an object's properties.
