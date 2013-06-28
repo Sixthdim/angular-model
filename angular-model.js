@@ -84,6 +84,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         // Add a new model or models (post-config)
         addModel: function(parent, def, scope){
           if (angular.isDefined(def.name)){
+
             // Single model by name
             // Generate model config
             var config = {};
@@ -133,9 +134,8 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                 ns.model[model] = {};
               }
             }
-            if (angular.isUndefined(scope.Model[model])){
-              scope.Model[model] = ns.model[model];
-            }
+
+            scope.Model[model] = ns.model[model];
           }
         },
 
@@ -194,11 +194,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                 Array.prototype.push.apply(ns.model[model], data);
               }
             } else {
-              if (angular.isDefined(index)){
-                $.extend(true, ns.model[model][index], data);
-              } else {
-                $.extend(true, ns.model[model], data);
-              }
+              $.extend(true, ns.model[model], data);
             }
           }
 
@@ -311,7 +307,11 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         // Clear cache
         clearCache: function(parent, model){
           if (angular.isDefined(ns.cache[model])){
-            delete ns.cache[model];
+            if (angular.isDefined(ns.config[model].type) && ns.config[model].type == 'array'){
+              ns.cache[model].splice(0);
+            } else {
+              ns.cache[model] = {};
+            }
           }
         },
 
@@ -319,7 +319,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         // Clear a model's data
         clear: function(parent, model){
           if (angular.isDefined(ns.model[model])){
-            if (angular.isArray(ns.model[model])){
+            if (angular.isDefined(ns.config[model].type) && ns.config[model].type == 'array'){
               ns.model[model].splice(0);
             } else {
               ns.model[model] = {};
@@ -389,16 +389,21 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         prepopulateData: function(model){
           if (angular.isDefined(model)){
             // Specific model
-            if (angular.isDefined(ns.config[model]) && angular.isDefined(ns.config[model].data)){
-              if (angular.isArray(ns.config[model].data)){
-                if (angular.isUndefined(ns.model[model])){
+            if (angular.isDefined(ns.config[model])){
+              if (angular.isUndefined(ns.model[model])){
+                if (angular.isDefined(ns.config[model].type && ns.config[model].type == 'array')){
                   ns.model[model] = [];
+                } else {
+                  ns.model[model] = {};
                 }
-                Array.prototype.push.apply(ns.model[model], ns.config[model].data);
+              }
 
-              } else {
-                ns.model[model] = {};
-                angular.extend(ns.model[model], ns.config[model].data);
+              if (angular.isDefined(ns.config[model].data)){
+                if (angular.isArray(ns.config[model].data)){
+                  Array.prototype.push.apply(ns.model[model], ns.config[model].data);
+                } else {
+                  angular.extend(ns.model[model], ns.config[model].data);
+                }
               }
             }
 
