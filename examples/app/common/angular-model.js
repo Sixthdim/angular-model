@@ -170,9 +170,9 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           if (target == 'replace'){
             if (angular.isArray(data)){
               if (angular.isDefined(index)){
-                ns.model[model][index].splice(0);
+                ns.model[model][index].length = 0;
               } else {
-                ns.model[model].splice(0);
+                ns.model[model].length = 0;
               }
             } else {
               if (angular.isDefined(index)){
@@ -186,15 +186,19 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           // Replace array model data, update object model data (deep extend)
           if ( (target == 'replace') || (target == 'update') ){
             if (angular.isArray(data)){
-              if (angular.isDefined(index)){
-                ns.model[model][index].splice(0);
+              if (angular.isDefined(index) && angular.isArray(ns.model[model])){
+                ns.model[model][index].length = 0;
                 Array.prototype.push.apply(ns.model[model][index], data);
               } else {
-                ns.model[model].splice(0);
+                ns.model[model].length = 0;
                 Array.prototype.push.apply(ns.model[model], data);
               }
             } else {
-              $.extend(true, ns.model[model], data);
+              if (angular.isDefined(index) && angular.isArray(ns.model[model])){
+                $.extend(true, ns.model[model][index], data);
+              } else {
+                $.extend(true, ns.model[model], data);
+              }
             }
           }
 
@@ -308,7 +312,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         clearCache: function(parent, model){
           if (angular.isDefined(ns.cache[model])){
             if (angular.isDefined(ns.config[model].type) && ns.config[model].type == 'array'){
-              ns.cache[model].splice(0);
+              ns.cache[model].length = 0;
             } else {
               ns.cache[model] = {};
             }
@@ -320,7 +324,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
         clear: function(parent, model){
           if (angular.isDefined(ns.model[model])){
             if (angular.isDefined(ns.config[model].type) && ns.config[model].type == 'array'){
-              ns.model[model].splice(0);
+              ns.model[model].length = 0;
             } else {
               ns.model[model] = {};
             }
