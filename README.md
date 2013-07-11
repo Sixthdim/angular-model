@@ -1,4 +1,4 @@
-angular-model v0.2.0
+angular-model v0.3.0
 =============
 
 <b>A single source of truth for your AngularJS apps.</b>
@@ -40,15 +40,15 @@ App.config(['ModelProvider', function(ModelProvider){ /* Configuration */ }]);
  *          resolve: (string) When to resolve. If 'parent', promise will be resolved on parent data load. Otherwise, resolved when all data is loaded, including nested.
  *          aliases: (array) Alias deep data nestings to a simpler model path. Array of objects:
  *              src: (string) Source object-notation path
- *              dest: (string) Desination object-notation path
- *          nested: (object) Auto load nested API endpoint data into result set
+ *              dest: (string) Destination object-notation path
+ *          nested: (object) Auto load nested API endpoint data into result set. Supports sub-nesting (recursion).
  *              path: (string) Object-notation path to the endpoint URL. Supports nested arrays. eg: results[].path.to
- *              action: (string) AngularJS fetch action (optional) Defaults to parent (query, get, put, delete, jsonp, etc.)
+ *              action: (string) AngularJS fetch action (query, get, put, delete, jsonp, etc.)
  *              type: (string) Base return type (array, object)
  *              inject: (string) Object-notation relative path of where to inject data
  *              aliases: (array) Alias deep data nestings to a simpler model path. Array of objects:
  *                  src: (string) Source object-notation path
- *                  dest: (string) Desination object-notation path
+ *                  dest: (string) Destination object-notation path
  */
 ModelProvider.configureModels({
     Page: {},
@@ -175,7 +175,7 @@ Model.clear('MyContext');
 ```javascript
 /* Model.addModel(model_definition[, scope]);
  * model_definition: (object) The model definition. Same as model config, it just has a model name property.
- * scope: (object) AngularJS $scope or $rootScope that scubscribes to this model
+ * scope: (object) AngularJS $scope or $rootScope that subscribes to this model
  */
 Model.addModel({
   name: 'MyNewContext',

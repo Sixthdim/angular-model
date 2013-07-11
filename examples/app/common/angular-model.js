@@ -1,6 +1,6 @@
 /**
  * @description Model - An API helper and data store
- * @version 0.2.0
+ * @version 0.3.0
  * @dependencies jQuery
  * @author Chris Collins
  * @website https://github.com/Sixthdim/angular-model
@@ -214,9 +214,9 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           // Do aliasing
           if (angular.isDefined(ns.config[model].aliases)){
             if (angular.isDefined(index)){
-              pri.doAliasing(model, ns.config[model].type, ns.config[model].aliases, '['+index+']');
+              pri.doAliasing(ns.model[model], ns.config[model].type, ns.config[model].aliases, '['+index+']');
             } else {
-              pri.doAliasing(model, ns.config[model].type, ns.config[model].aliases);
+              pri.doAliasing(ns.model[model], ns.config[model].type, ns.config[model].aliases);
             }
           }
 
@@ -282,7 +282,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             }
 
             // Get nested if any, return promise
-            pri.doNesting(model).then(function(){
+            pri.doNesting(ns.model[model], ns.config[model].nested).then(function(){
               // Set cache
               if (ns.config[model].cache){
                 pri.setCache(model);
@@ -423,8 +423,9 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
 
         // Do nesting
-        doNesting: function(model){
-          if ( (angular.isUndefined(ns.config[model].nested)) || (ns.config[model].nested.length == 0) ){
+        doNesting: function(data, config){
+          if ( (angular.isUndefined(config)) || (config.length == 0) ){
+            // No nesting configured, resolve
             var defer = $q.defer();
             defer.resolve();
             return defer.promise;
@@ -433,10 +434,10 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           var nest = 0,
               promises = [];
 
-          pri.buildNestingConfig(model);
+          pri.buildNestingConfig(data, config);
 
-          for (nest = 0; nest < ns.config[model].nested.length; nest++){
-            promises = promises.concat( pri.populateNestingEndpoints(model, nest) );
+          for (nest = 0; nest < config.length; nest++){
+            promises = promises.concat( pri.populateNestingEndpoints(data, config[nest].config) );
           }
 
           return $q.all(promises);
@@ -444,15 +445,15 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
 
         // Build model nesting config obj
-        buildNestingConfig: function(model){
+        buildNestingConfig: function(data, config){
           // Loop through each endpoint nesting
-          for (var n = 0; n < ns.config[model].nested.length; n++){
+          for (var n = 0; n < config.length; n++){
             // Skip if already built
-            if (angular.isDefined(ns.config[model].nested[n].config)){
+            if (angular.isDefined(config[n].config)){
               continue;
             }
 
-            var nesting = ns.config[model].nested[n],
+            var nesting = config[n],
                 parts = nesting.path.split('[]'),
                 i = 0,
                 c = {},
@@ -461,18 +462,20 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                   isArray: false,
                   type: nesting.type,
                   action: nesting.action,
+                  inject: nesting.inject,
+                  nested: (angular.isDefined(nesting.nested) ? nesting.nested : []),
                   aliases: (angular.isDefined(nesting.aliases) ? nesting.aliases : [])
                 };
 
             // Store config array on the primary config's nested element
-            ns.config[model].nested[n].config = [];
+            config[n].config = [];
 
             // Model parent endpoint returns an array
-            if (ns.config[model].type == 'array'){
+            if (ng.isArray(data)){
               c = angular.copy(cProto, {});
               c.path = '';
               c.isArray = true;
-              ns.config[model].nested[n].config.push(c);
+              config[n].config.push(c);
             }
 
             // Loop through path array segments ...[]...
@@ -493,7 +496,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               c.path = c.path.replace(/^\.+/g, '');
 
               // Push config obj onto stack
-              ns.config[model].nested[n].config.push(c);
+              config[n].config.push(c);
             }
           }
 
@@ -502,12 +505,11 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
 
         // Pull nested endpoints from data
-        populateNestingEndpoints: function(model, nestIndex, nestPath, configIndex){
+        populateNestingEndpoints: function(data, nestConfig, nestPath, configIndex){
           var nestedData = null,
               endpoint = '',
               resource = null,
               data_i = 0,
-              nestConfig = ns.config[model].nested[nestIndex].config,
               nestingParams = {},
               nestingActions = {},
               nestingAction = 'query',
@@ -526,16 +528,10 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           }
 
           // Set nesting action
-          if (angular.isDefined(nestConfig[configIndex].action)){
-            // Set from nest config
-            nestingAction = nestConfig[configIndex].action;
-          } else if (angular.isDefined(ns.config[model].action)){
-            // Set from parent config
-            nestingAction = ns.config[model].action;
-          }
+          nestingAction = nestConfig[configIndex].action;
 
           // Set nesting inject path
-          nestingInject = ns.config[model].nested[nestIndex].inject;
+          nestingInject = nestConfig[configIndex].inject;
 
           // Default nest path
           if (angular.isUndefined(nestPath)){
@@ -545,11 +541,11 @@ angular.module('model', ['ngResource']).provider('Model', function(){
           // If segment is an array, loop through data array and fetch each nested endpoint
           if (nestConfig[configIndex].isArray){
             nestPath = nestPath+(nestPath==''?'':'.')+nestConfig[configIndex].path;
-            nestedData = pri.getObjValue(ns.model[model], nestPath);
+            nestedData = pri.getObjValue(data, nestPath);
 
             for (data_i = 0; data_i < nestedData.length; data_i++){
               var path = nestPath+'['+data_i+']';
-              promises = promises.concat( pri.populateNestingEndpoints(model, nestIndex, path, (configIndex+1)) );
+              promises = promises.concat( pri.populateNestingEndpoints(data, nestConfig, path, (configIndex+1)) );
             }
 
           } else {
@@ -557,7 +553,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
             var path = (nestPath==''?'':nestPath+'.')+nestConfig[configIndex].path;
 
             // Segment is not an array, fetch endpoint
-            endpoint = pri.getObjValue(ns.model[model], path);
+            endpoint = pri.getObjValue(data, path);
 
             // Endpoint is a string
             if (angular.isString(endpoint)){
@@ -574,15 +570,17 @@ angular.module('model', ['ngResource']).provider('Model', function(){
               resource = $resource(endpoint, nestingParams, nestingActions);
               var nestedResults = resource[nestingAction](function(){
                 // HTTP Success
+                // Do more nesting
+                pri.doNesting(nestedResults, nestConfig[configIndex].nested).then(function(){
+                  // Inject nested data into object
+                  pri.setObjValue(data, nestPath+'.'+nestingInject, nestedResults);
 
-                // Inject nested data into
-                pri.setObjValue(ns.model[model], nestPath+'.'+nestingInject, nestedResults);
+                  // Do aliasing
+                  pri.doAliasing(data, 'object', nestConfig[configIndex].aliases, nestPath);
 
-                // Do aliasing
-                pri.doAliasing(model, 'object', nestConfig[configIndex].aliases, nestPath);
-
-                // Resolve promise
-                defer.resolve();
+                  // Resolve promise
+                  defer.resolve( data );
+                });
 
               }, function(){
                 // HTTP Fail
@@ -599,7 +597,7 @@ angular.module('model', ['ngResource']).provider('Model', function(){
 
 
         // Do aliasing
-        doAliasing: function(model, type, aliases, basePath){
+        doAliasing: function(data, type, aliases, basePath){
           // model has aliases?
           if (angular.isDefined(aliases) && angular.isArray(aliases)){
             for (var i = 0; i < aliases.length; i++){
@@ -610,12 +608,12 @@ angular.module('model', ['ngResource']).provider('Model', function(){
                     destPath = (angular.isDefined(basePath) ? basePath+'.' : '') + aliases[i].dest;
 
                 if (type == 'array'){
-                  for (var x = 0; x < ns.model[model].length; x++){
-                    pri.setObjValue(ns.model[model][x], destPath, pri.getObjValue(ns.model[model][x], srcPath));
+                  for (var x = 0; x < data.length; x++){
+                    pri.setObjValue(data[x], destPath, pri.getObjValue(data[x], srcPath));
                   }
 
                 } else {
-                  pri.setObjValue(ns.model[model], destPath, pri.getObjValue(ns.model[model], srcPath));
+                  pri.setObjValue(data, destPath, pri.getObjValue(data, srcPath));
                 }
               }
             }
