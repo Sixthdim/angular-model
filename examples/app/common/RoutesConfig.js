@@ -13,6 +13,12 @@ App.ng.config(
         controller: 'ColorsCtrl'
       });
 
+      // Bench Route
+      route.when('/bench', {
+        templateUrl: App.viewsPath+'BenchView.html',
+        controller: 'BenchCtrl'
+      });
+
       // All Other Routes
       route.otherwise({redirectTo: '/'});
 
