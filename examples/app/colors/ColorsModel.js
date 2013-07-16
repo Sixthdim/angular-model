@@ -47,6 +47,7 @@ App.ng.config(
         // Colors
         Colors: {
           endpoint: '/data/colors.json',        // URL to data/REST API endpoint
+          action: 'query',
           type: 'array',                        // Returned data is an array
           aliases: [
             {
@@ -57,6 +58,7 @@ App.ng.config(
           nested: [
             {
               path: 'things.href',              // Object notated path to URL of nested endpoint
+              action: 'query',
               type: 'array',                    // Nested endpoint data will return as an array
               inject: 'things'                  // Insted of replacing "things.href" with data, replace "things" with data
             }
