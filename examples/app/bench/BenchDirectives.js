@@ -9,7 +9,7 @@ App.ng.directive('myWatchDirective',
           '$scope', '$element', '$attrs',
           function($scope, $element, $attrs){
             // Create watcher
-            $scope.$watch('myModel', function(newVal, oldVal){
+            $scope.$watch('Model.Bench.nested.example.message', function(newVal, oldVal){
               console.log('myModel changed');
               $element.html(newVal);
             });

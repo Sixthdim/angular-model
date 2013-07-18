@@ -27,7 +27,13 @@ App.ng.controller('BenchCtrl',
 
         $scope.myModel = '';
         for (var x = 1; x <= 100000; x++){
-          $scope.myModel = 'Model Change Iteration: '+x;
+          Model.set('Bench', {
+            nested: {
+              example: {
+                message: 'Model Change Iteration: '+x
+              }
+            }
+          });
         }
 
         var end = new Date().getTime();

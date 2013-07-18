@@ -1,13 +1,13 @@
 <div class="container">
 
   <h4>Benchmark</h4>
-  <p>This is a simple benchmark to show the differences in the Model/$watch and $broadcast/$on methodologies.</p>
+  <p>This is a simple benchmark to show the differences in the Model/$watch and $broadcast/$on methodologies. Open your Activity Monitor or Task Manager to view CPU usage for each benchmark.</p>
 
   <div class="row">
     <div class="span6">
       <div class="well">
         <h4>Model/$watch</h4>
-        <div>Update the bound model 100,000 times</div>
+        <div>Update the bound Model 100,000 times</div>
         <button class="btn" ng-click="benchWatch()">Bench Model/$watch</button>
         <p my-watch-directive></p>
         <p>Elapsed: {{ time.watch | number }} ms</p>
