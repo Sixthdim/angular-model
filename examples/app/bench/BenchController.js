@@ -13,6 +13,12 @@ App.ng.controller('BenchCtrl',
         bodyClass: 'bench'
       });
 
+      // Time model
+      $scope.time = {
+        'watch': 0,
+        'event': 0
+      };
+
       // Benchmark $watch
       // $watch is very fast and efficient.
       // Use is best for DOM updates.
@@ -21,11 +27,12 @@ App.ng.controller('BenchCtrl',
 
         $scope.myModel = '';
         for (var x = 1; x <= 100000; x++){
-          $scope.myModel = 'Watch Iteration: '+x;
+          $scope.myModel = 'Model Change Iteration: '+x;
         }
 
         var end = new Date().getTime();
         var time = end - start;
+        $scope.time.watch = time;
         console.log('benchWatch Time: '+time+'ms');
       };
 
@@ -42,6 +49,7 @@ App.ng.controller('BenchCtrl',
 
         var end = new Date().getTime();
         var time = end - start;
+        $scope.time.event = time;
         console.log('benchBroadcast Time: '+time+'ms');
       };
     }
