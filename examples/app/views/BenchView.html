@@ -7,6 +7,7 @@
     <div class="span6">
       <div class="well">
         <h4>Model/$watch</h4>
+        <div>Update the bound model 100,000 times</div>
         <button class="btn" ng-click="benchWatch()">Bench Model/$watch</button>
         <p my-watch-directive></p>
         <p>Elapsed: {{ time.watch | number }} ms</p>
@@ -16,6 +17,7 @@
     <div class="span6">
       <div class="well">
         <h4>$broadcast/$on</h4>
+        <div>Fire event 100,000 times</div>
         <button class="btn" ng-click="benchBroadcast()">Bench $broadcast/$on</button>
         <p my-event-directive></p>
         <p>Elapsed: {{ time.event | number }} ms</p>
