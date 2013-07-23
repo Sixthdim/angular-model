@@ -1,14 +1,15 @@
 <div class="container">
 
-  <h4>Benchmark</h4>
+  <h4>Methodologies Benchmark</h4>
   <p>This is a simple benchmark to show the differences in the Model/$watch and $broadcast/$on methodologies. Open your Activity Monitor or Task Manager to view CPU usage for each benchmark.</p>
 
   <div class="row">
     <div class="span6">
       <div class="well">
-        <h4>Model/$watch</h4>
-        <div>Update the bound Model 100,000 times</div>
-        <button class="btn" ng-click="benchWatch()">Bench Model/$watch</button>
+        <h4>Model/$watch <label class="pull-right"><input type="checkbox" value="1" ng-model="useAngularModel" /> Use angular-model</label></h4>
+        <div>Update the bound Model {{ iterations | number }} times</div>
+        <button class="btn" ng-click="benchWatchSimple()" ng-hide="useAngularModel">Bench Simple Model/$watch</button>
+        <button class="btn" ng-click="benchWatchAdvanced()" ng-show="useAngularModel">Bench angular-model Model/$watch</button>
         <p my-watch-directive></p>
         <p>Elapsed: {{ time.watch | number }} ms</p>
       </div>
@@ -17,7 +18,7 @@
     <div class="span6">
       <div class="well">
         <h4>$broadcast/$on</h4>
-        <div>Fire event 100,000 times</div>
+        <div>Fire event {{ iterations | number }} times</div>
         <button class="btn" ng-click="benchBroadcast()">Bench $broadcast/$on</button>
         <p my-event-directive></p>
         <p>Elapsed: {{ time.event | number }} ms</p>

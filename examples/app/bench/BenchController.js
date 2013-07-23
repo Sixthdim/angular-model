@@ -19,14 +19,34 @@ App.ng.controller('BenchCtrl',
         'event': 0
       };
 
-      // Benchmark $watch
+      // Set iterations
+      $scope.iterations = 100000;
+
+      // Benchmark $watch (Simple)
       // $watch is very fast and efficient.
       // Use is best for DOM updates.
-      $scope.benchWatch = function(){
+      $scope.benchWatchSimple = function(){
         var start = new Date().getTime();
 
         $scope.myModel = '';
-        for (var x = 1; x <= 100000; x++){
+        for (var x = 1; x <= $scope.iterations; x++){
+          $scope.Model.Bench.nested.example.message = 'Model Change Iteration: '+x;
+        }
+
+        var end = new Date().getTime();
+        var time = end - start;
+        $scope.time.watch = time;
+        console.log('benchWatch Time: '+time+'ms');
+      };
+
+      // Benchmark $watch (Advanced)
+      // $watch is very fast and efficient.
+      // Use is best for DOM updates.
+      $scope.benchWatchAdvanced = function(){
+        var start = new Date().getTime();
+
+        $scope.myModel = '';
+        for (var x = 1; x <= $scope.iterations; x++){
           Model.set('Bench', {
             nested: {
               example: {
@@ -49,7 +69,7 @@ App.ng.controller('BenchCtrl',
         var start = new Date().getTime();
 
         $scope.$broadcast('myEvent', {message: ''});
-        for (var x = 1; x <= 100000; x++){
+        for (var x = 1; x <= $scope.iterations; x++){
           $scope.$broadcast('myEvent', {message: 'Broadcast Iteration: '+x});
         }
 
